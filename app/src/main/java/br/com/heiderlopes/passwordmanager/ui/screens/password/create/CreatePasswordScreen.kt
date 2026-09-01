@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,17 +22,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -40,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -50,32 +59,62 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import br.com.heiderlopes.passwordmanager.R
+import br.com.heiderlopes.passwordmanager.domain.generator.PasswordGenerator
+import br.com.heiderlopes.passwordmanager.domain.generator.PinPasswordGenerator
+import br.com.heiderlopes.passwordmanager.domain.generator.StandardPasswordGenerator
+import br.com.heiderlopes.passwordmanager.domain.model.PasswordType
 import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePasswordScreen() {
 
+    val defaultMinLength = integerResource(R.integer.weak_password_length)
+    val defaultMaxLength = integerResource(R.integer.strong_password_length)
+    var maxCharacters by rememberSaveable { mutableIntStateOf((defaultMaxLength + defaultMinLength) / 2) }
+
     val context = LocalContext.current
 
+    var passwordType by rememberSaveable { mutableStateOf(PasswordType.PIN) }
+
+    var isEditable by rememberSaveable { mutableStateOf(false) }
+
+    // Checkboxes
+    var includeUppercase by rememberSaveable { mutableStateOf(true) }
+
+    var includeLowercase by rememberSaveable { mutableStateOf(true) }
+
+    var includeNumbers by rememberSaveable { mutableStateOf(true) }
+
+    var includeSymbols by rememberSaveable { mutableStateOf(false) }
+
+
     fun copyPassword(context: Context, password: String) {
-        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipboardManager =
+            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
         val clip = ClipData.newPlainText("Senha", password)
         clipboardManager.setPrimaryClip(clip)
         Toast.makeText(context, "Senha copiada!", Toast.LENGTH_SHORT).show()
     }
 
-    fun generatePassword(): String {
-        val upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        val lower = "abcdefghijklmnopqrstuvwxyz"
-        val numbers = "0123456789"
-        val symbols = "!@#\$%&*"
-        val chars = upper+lower+numbers+symbols
-        return (1..12)
-            .map { chars.random() }
-            .joinToString("")
+    fun generatePassword(maxChar: Int): String {
+        val generator: PasswordGenerator = when (passwordType) {
+            PasswordType.PIN -> PinPasswordGenerator()
+            PasswordType.STANDARD -> StandardPasswordGenerator(
+                includeUppercase = if (isEditable)
+                    includeUppercase else true,
+                includeLowercase = if (isEditable)
+                    includeLowercase else true,
+                includeNumbers = if (isEditable) includeNumbers
+                else true,
+                includeSymbols = if (isEditable) includeSymbols
+                else true
+            )
+        }
+        return generator.generate(maxChar)
     }
 
     var password by rememberSaveable { mutableStateOf("") }
@@ -173,9 +212,12 @@ fun CreatePasswordScreen() {
                     Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
                     OutlinedTextField(
+                        enabled = isEditable,
                         value = password,
                         // atualiza o valor quando o usuário digita.
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            if (it.length <= maxCharacters) password = it
+                        },
                         // Mostra o título do campo (flutua acima do campo quando começa a digitar).
                         label = {
                             Text(stringResource(R.string.password_generated_label))
@@ -204,16 +246,182 @@ fun CreatePasswordScreen() {
                             }
                         }
                     )
+
+                    Text(
+                        text = "${password.length} / $maxCharacters",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(end = 8.dp, top = 4.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_small)))
+
+                    Text(stringResource(R.string.password_type))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+
+                    ) {
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            RadioButton(
+                                selected = passwordType == PasswordType.PIN,
+                                onClick = { passwordType = PasswordType.PIN })
+                            Text("PIN")
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            RadioButton(
+                                selected = passwordType == PasswordType.STANDARD,
+                                onClick = { passwordType = PasswordType.STANDARD })
+                            Text("Senha padrão")
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
+                    HorizontalDivider(
+                        thickness = dimensionResource(R.dimen.thickness_small),
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(
+                            vertical =
+                                dimensionResource(R.dimen.space_small)
+                        )
+                    ) {
+
+                        Icon(
+                            imageVector = if (isEditable)
+                                Icons.Default.LockOpen else Icons.Filled.Lock,
+                            contentDescription = "Ícone de cadeado"
+                        )
+
+                        Text(
+                            stringResource(R.string.allow_edit_password),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Switch(
+                            checked = isEditable,
+                            onCheckedChange = { isEditable = it }
+                        )
+                    }
+
+                    HorizontalDivider(
+                        thickness = dimensionResource(R.dimen.thickness_small),
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
+
+                    if (isEditable) {
+                        Text(text = stringResource(R.string.password_length, maxCharacters))
+
+                        Slider(
+                            value = maxCharacters.toFloat(),
+                            onValueChange = {
+                                maxCharacters = it.toInt()
+                                password = ""
+                            },
+                            valueRange = defaultMinLength.toFloat()..defaultMaxLength.toFloat(),
+                            //steps = defaultMaxLength - defaultMinLength,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        if (passwordType != PasswordType.PIN) {
+                            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
+
+                            Text(stringResource(R.string.include_characters))
+                            Spacer(
+                                modifier =
+
+                                    Modifier.height(dimensionResource(R.dimen.space_small))
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Checkbox(
+                                        checked = includeUppercase,
+                                        onCheckedChange = { includeUppercase = it }
+                                    )
+                                    Text(stringResource(R.string.uppercase))
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Checkbox(
+                                        checked = includeLowercase,
+                                        onCheckedChange = { includeLowercase = it }
+                                    )
+                                    Text(stringResource(R.string.lowercase))
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment =
+
+                                        Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Checkbox(
+                                        checked = includeNumbers,
+                                        onCheckedChange = { includeNumbers = it }
+                                    )
+                                    Text(stringResource(R.string.numbers))
+                                }
+                                Row(
+                                    verticalAlignment =
+                                        Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Checkbox(
+                                        checked = includeSymbols,
+                                        onCheckedChange = { includeSymbols = it }
+                                    )
+                                    Text(stringResource(R.string.symbols))
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
             Button(onClick = {
-                password = generatePassword()
+                password = generatePassword(
+                    if (isEditable) maxCharacters
+                    else ((defaultMaxLength + defaultMinLength) / 2)
+                )
             }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.generate_password))
             }
