@@ -1,0 +1,94 @@
+package br.com.heiderlopes.passwordmanager.ui.screens.home
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import br.com.heiderlopes.passwordmanager.R
+import br.com.heiderlopes.passwordmanager.ui.components.AppTopBar
+import br.com.heiderlopes.passwordmanager.ui.screens.home.components.HomeContent
+
+@Composable
+fun HomeScreen() {
+    var selectedItem by rememberSaveable { mutableIntStateOf(0) }
+
+    val items = listOf(
+        BottomNavItem(title = "Home", icon = Icons.Default.Home),
+        BottomNavItem(title = "Senhas", icon = Icons.Default.Lock),
+        BottomNavItem(title = "Perfil", icon = Icons.Default.Person)
+    )
+
+    Scaffold(
+        topBar = { AppTopBar(stringResource(R.string.app_name)) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {},
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = CircleShape,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Adicionar senha"
+                )
+            }
+        },
+        bottomBar = {
+            NavigationBar {
+                items.forEachIndexed { index, item ->
+                    NavigationBarItem(
+                        selected = selectedItem == index,
+                        onClick = { selectedItem = index },
+                        icon = {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title
+                            )
+                        },
+                        label = {
+                            Text(item.title)
+                        }
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            when (selectedItem) {
+                0 -> HomeContent()
+                1 -> Text("Tela Lista de senhas")
+                2 -> Text("Tela de Perfil")
+            }
+        }
+    }
+}
