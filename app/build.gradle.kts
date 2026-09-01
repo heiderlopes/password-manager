@@ -66,4 +66,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlin.serialization.json)
 
+    implementation(libs.androidx.datastore.preferences)
+
+
+
 }

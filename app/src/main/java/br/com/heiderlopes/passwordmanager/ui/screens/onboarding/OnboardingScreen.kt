@@ -9,17 +9,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.heiderlopes.passwordmanager.R
+import br.com.heiderlopes.passwordmanager.data.local.datastore.OnboardingPreferences
+import br.com.heiderlopes.passwordmanager.data.repository.OnboardingRepositoryImpl
 import br.com.heiderlopes.passwordmanager.ui.components.CheckboxOption
 import br.com.heiderlopes.passwordmanager.ui.components.HorizontalAnimatedContent
 import br.com.heiderlopes.passwordmanager.ui.components.PageIndicator
@@ -32,13 +38,26 @@ import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 fun OnboardingScreen(
     onFinish: () -> Unit
 ) {
-    var currentPage by remember {
-        mutableIntStateOf(0)
+
+    val context = LocalContext.current
+
+    val repository = remember {
+        OnboardingRepositoryImpl(
+            OnboardingPreferences(context)
+        )
     }
 
-    var skipIntro by remember {
-        mutableStateOf(false)
+    val factory = remember {
+        OnboardingViewModelFactory(repository)
     }
+
+    val viewModel: OnboardingViewModel = viewModel(
+        factory = factory
+    )
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    val scope = rememberCoroutineScope()
 
     val onboardingItems = listOf(
 
@@ -71,7 +90,7 @@ fun OnboardingScreen(
         ) {
 
             HorizontalAnimatedContent(
-                currentPage = currentPage,
+                currentPage = uiState.currentPage,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -84,7 +103,7 @@ fun OnboardingScreen(
 
             PageIndicator(
                 pageCount = onboardingItems.size,
-                currentPage = currentPage,
+                currentPage = uiState.currentPage,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
@@ -96,13 +115,11 @@ fun OnboardingScreen(
                     .height(56.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (currentPage == onboardingItems.lastIndex) {
+                if (uiState.currentPage == onboardingItems.lastIndex) {
                     CheckboxOption(
                         text = "Não mostrar novamente",
-                        checked = skipIntro,
-                        onCheckedChange = {
-                            skipIntro = it
-                        }
+                        checked = uiState.skipOnboarding,
+                        onCheckedChange = viewModel::onSkipOnboardingChange
                     )
                 }
             }
@@ -112,14 +129,10 @@ fun OnboardingScreen(
             )
 
             OnboardingNavButtons(
-                currentPage = currentPage,
+                currentPage = uiState.currentPage,
                 pageCount = onboardingItems.size,
-                onBack = {
-                    currentPage--
-                },
-                onNext = {
-                    currentPage++
-                },
+                onBack = viewModel::previousPage,
+                onNext = viewModel::nextPage,
                 onFinish = {
                     // Futuramente: // salvar skipIntro no DataStore
                     onFinish()
