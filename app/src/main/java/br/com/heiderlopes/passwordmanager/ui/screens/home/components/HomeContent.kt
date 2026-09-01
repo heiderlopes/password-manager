@@ -56,7 +56,7 @@ fun HomeContent(
         }
 
         item {
-            NpsSection {surveyId -> onNpsClick(surveyId) }
+            NpsSection(homeNpsUiState = uiState.nps) { surveyId -> onNpsClick(surveyId) }
         }
 
         item {
