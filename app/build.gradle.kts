@@ -6,7 +6,7 @@ plugins {
 android {
     namespace = "br.com.heiderlopes.passwordmanager"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
@@ -14,7 +14,6 @@ android {
     defaultConfig {
         applicationId = "br.com.heiderlopes.passwordmanager"
         minSdk = 24
-        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
