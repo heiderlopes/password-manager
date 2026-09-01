@@ -20,27 +20,39 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,12 +67,18 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.heiderlopes.passwordmanager.R
+import br.com.heiderlopes.passwordmanager.data.local.room.database.AppDatabase
+import br.com.heiderlopes.passwordmanager.data.repository.PasswordRepositoryImpl
 import br.com.heiderlopes.passwordmanager.domain.generator.PasswordGenerator
 import br.com.heiderlopes.passwordmanager.domain.generator.PinPasswordGenerator
 import br.com.heiderlopes.passwordmanager.domain.generator.StandardPasswordGenerator
@@ -77,62 +95,66 @@ fun CreatePasswordScreen(
     onNavigateBack: () -> Unit
 ) {
 
-    val defaultMinLength = integerResource(R.integer.weak_password_length)
-    val defaultMaxLength = integerResource(R.integer.strong_password_length)
-    var maxCharacters by rememberSaveable { mutableIntStateOf((defaultMaxLength + defaultMinLength) / 2) }
 
     val context = LocalContext.current
 
-    var passwordType by rememberSaveable { mutableStateOf(PasswordType.PIN) }
+    val repository = remember {
+        PasswordRepositoryImpl(AppDatabase.getInstance(context).passwordDao())
+    }
 
-    var isEditable by rememberSaveable { mutableStateOf(false) }
+    val factory = remember {
+        CreatePasswordViewModelFactory(repository)
+    }
 
-    // Checkboxes
-    var includeUppercase by rememberSaveable { mutableStateOf(true) }
+    val viewModel: CreatePasswordViewModel = viewModel(factory = factory)
 
-    var includeLowercase by rememberSaveable { mutableStateOf(true) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    var includeNumbers by rememberSaveable { mutableStateOf(true) }
+    val defaultMinLength = integerResource(R.integer.weak_password_length)
+    val defaultMaxLength = integerResource(R.integer.strong_password_length)
 
-    var includeSymbols by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(passwordId) {
+        passwordId?.let { id ->
+            viewModel.loadPasswordById(id)
+        }
+    }
 
-
-    fun copyPassword(context: Context, password: String) {
+    fun copyToClipboard(label: String, value: String) {
         val clipboardManager =
             context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-        val clip = ClipData.newPlainText("Senha", password)
+        val clip = ClipData.newPlainText(label, value)
         clipboardManager.setPrimaryClip(clip)
-        Toast.makeText(context, "Senha copiada!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "$label copiado!", Toast.LENGTH_SHORT).show()
     }
 
-    fun generatePassword(maxChar: Int): String {
-        val generator: PasswordGenerator = when (passwordType) {
-            PasswordType.PIN -> PinPasswordGenerator()
-            PasswordType.STANDARD -> StandardPasswordGenerator(
-                includeUppercase = if (isEditable)
-                    includeUppercase else true,
-                includeLowercase = if (isEditable)
-                    includeLowercase else true,
-                includeNumbers = if (isEditable) includeNumbers
-                else true,
-                includeSymbols = if (isEditable) includeSymbols
-                else true
-            )
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.onSuccessMessageShown()
         }
-        return generator.generate(maxChar)
     }
-
-    var password by rememberSaveable { mutableStateOf("") }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             AppTopBar(
                 title = stringResource(R.string.app_name),
+                actions = {
+                    IconButton(onClick = { viewModel.save() }) {
+                        Icon(
+                            imageVector = Icons.Default.Save,
+                            contentDescription = "Save password"
+                        )
+                    }
+                },
                 onBackClick = onNavigateBack
             )
         }
-
     ) { innerPadding ->
 
         Column(
@@ -144,6 +166,7 @@ fun CreatePasswordScreen(
             //.padding(16.dp)
 
         ) {
+
             Box(
                 modifier = Modifier
                     // Faz o Box ocupar o espaço vertical disponível entre outros elementos dentro de uma Column.
@@ -156,15 +179,26 @@ fun CreatePasswordScreen(
                     // Isso é fundamental para formularios longos, listas, ou conteúdo extenso.
                     .verticalScroll(rememberScrollState())
                     // Adiciona espaço interno de 8dp em todos os lados do Box.
-                    .padding(dimensionResource(R.dimen.padding_small))
+                    .padding(8.dp)
             ) {
                 Column {
                     // Conteúdo do formulário
-
-                    LogoApp(
-                        modifier = Modifier.align(
-                            Alignment.CenterHorizontally
-                        )
+                    Image(
+                        // Carrega uma imagem local do diretório res/drawable.
+                        painter = painterResource(id = R.drawable.logo_app),
+                        // Descrição para acessibilidade (ex: leitores de tela).
+                        contentDescription = stringResource(R.string.app_name),
+                        // modifier permite configurar a aparência da imagem:
+                        modifier = Modifier
+                            // Define um tamanho fixo (largura e altura de 150dp).
+                            .size(150.dp)
+                            // Aplica um fundo colorido no formato de um círculo atrás da imagem. onBackground é uma cor do tema atual (contraste com o fundo).
+                            .background(MaterialTheme.colorScheme.onBackground,
+                                shape = CircleShape)
+                            // Centraliza a imagem horizontalmente dentro de um Column ou outro layout que aceite alinhamento de filhos. Só tem efeito se usada dentro de layouts como Column ou Box com alinhamento.
+                            .align(Alignment.CenterHorizontally),
+                        // A imagem será cortada para preencher completamente os 150×150dp, sem distorcer.
+                        contentScale = ContentScale.Crop
                     )
 
                     Text(
@@ -181,10 +215,10 @@ fun CreatePasswordScreen(
                         textAlign = TextAlign.Center,
                         // Se o texto for maior, ele será cortado e aparecerá ... no fim.
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = dimensionResource(R.dimen.padding_medium))
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
                     Text(
                         text = stringResource(R.string.create_password_subtitle),
@@ -198,50 +232,104 @@ fun CreatePasswordScreen(
                     Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
                     OutlinedTextField(
-                        enabled = isEditable,
-                        value = password,
-                        // atualiza o valor quando o usuário digita.
-                        onValueChange = {
-                            if (it.length <= maxCharacters) password = it
+                        value = uiState.serviceName,
+                        onValueChange = viewModel::onServiceNameChange,
+                        label = { Text("Service name") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Language,
+                                contentDescription = null
+                            )
                         },
-                        // Mostra o título do campo (flutua acima do campo quando começa a digitar).
-                        label = {
-                            Text(stringResource(R.string.password_generated_label))
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_small)))
+
+                    OutlinedTextField(
+                        value = uiState.username,
+                        onValueChange = viewModel::onUsernameChange,
+                        label = { Text("Username") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null
+                            )
                         },
-                        // O campo vai ocupar toda a largura disponível.
+                        trailingIcon = {
+                            if (uiState.username.isNotEmpty()) {
+                                Icon(
+                                    imageVector = Icons.Filled.ContentCopy,
+                                    contentDescription = stringResource(R.string.copy_password),
+                                    modifier = Modifier.clickable {
+                                        copyToClipboard("Username", uiState.username)
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_small)))
+
+                    OutlinedTextField(
+                        enabled = uiState.canEditPasswordManually,
+                        value = uiState.password,
+                        onValueChange = viewModel::onPasswordChange,
+                        label = { Text(stringResource(R.string.password_generated_label)) },
                         modifier = Modifier.fillMaxWidth(),
-                        // leadingIcon: coloca um ícone no lado esquerdo do campo.
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
-                                contentDescription =
-                                    stringResource(R.string.password_generated_label)
+                                contentDescription = stringResource(R.string.password_generated_label)
                             )
-
                         },
-                        // trailingIcon: coloca um ícone no lado direito do campo.
+                        visualTransformation = if (uiState.isPasswordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
                         trailingIcon = {
-                            if (password.isNotEmpty()) {
-                                Icon(
-                                    imageVector = Icons.Filled.ContentCopy,
-                                    contentDescription =
-                                        stringResource(R.string.copy_password),
-                                    modifier = Modifier.clickable {
-                                        copyPassword(context, password)
-                                    })
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(end = 8.dp)
+                            ) {
+                                IconButton(onClick = viewModel::onTogglePasswordVisibility) {
+                                    Icon(
+                                        imageVector = if (uiState.isPasswordVisible) {
+                                            Icons.Default.VisibilityOff
+                                        } else {
+                                            Icons.Default.Visibility
+                                        },
+                                        contentDescription = if (uiState.isPasswordVisible) {
+                                            "Ocultar senha"
+                                        } else {
+                                            "Mostrar senha"
+                                        }
+                                    )
+                                }
+
+                                if (uiState.password.isNotEmpty()) {
+                                    Icon(
+                                        imageVector = Icons.Filled.ContentCopy,
+                                        contentDescription = stringResource(R.string.copy_password),
+                                        modifier = Modifier.clickable {
+                                            copyToClipboard("Senha", uiState.password)
+                                        }
+                                    )
+                                }
                             }
                         }
                     )
 
                     Text(
-                        text = "${password.length} / $maxCharacters",
+                        text = "${uiState.password.length} / ${uiState.maxCharacters}",
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
                             .align(Alignment.End)
                             .padding(end = 8.dp, top = 4.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_small)))
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
                     Text(stringResource(R.string.password_type))
 
@@ -258,8 +346,9 @@ fun CreatePasswordScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             RadioButton(
-                                selected = passwordType == PasswordType.PIN,
-                                onClick = { passwordType = PasswordType.PIN })
+                                selected = uiState.passwordType == PasswordType.PIN,
+                                onClick = { viewModel.onPasswordTypeChange(PasswordType.PIN) }
+                            )
                             Text("PIN")
                         }
                         Row(
@@ -267,13 +356,14 @@ fun CreatePasswordScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             RadioButton(
-                                selected = passwordType == PasswordType.STANDARD,
-                                onClick = { passwordType = PasswordType.STANDARD })
+                                selected = uiState.passwordType == PasswordType.STANDARD,
+                                onClick = { viewModel.onPasswordTypeChange(PasswordType.STANDARD) }
+                            )
                             Text("Senha padrão")
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     HorizontalDivider(
                         thickness = dimensionResource(R.dimen.thickness_small),
@@ -283,28 +373,29 @@ fun CreatePasswordScreen(
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(
-                            vertical =
-                                dimensionResource(R.dimen.space_small)
-                        )
+                        modifier = Modifier.padding(vertical =
+                            dimensionResource(R.dimen.space_small))
                     ) {
 
                         Icon(
-                            imageVector = if (isEditable)
-                                Icons.Default.LockOpen else Icons.Filled.Lock,
+                            imageVector = if (uiState.canEditPasswordManually) {
+                                Icons.Default.LockOpen
+                            } else {
+                                Icons.Filled.Lock
+                            },
                             contentDescription = "Ícone de cadeado"
                         )
 
                         Text(
-                            stringResource(R.string.allow_edit_password),
+                            stringResource (R.string.allow_edit_password),
                             modifier = Modifier.padding(horizontal = 8.dp)
                         )
 
                         Spacer(modifier = Modifier.weight(1f))
 
                         Switch(
-                            checked = isEditable,
-                            onCheckedChange = { isEditable = it }
+                            checked = uiState.canEditPasswordManually,
+                            onCheckedChange = viewModel::onCanEditPasswordManuallyChange
                         )
                     }
 
@@ -316,50 +407,45 @@ fun CreatePasswordScreen(
 
                     Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
-                    if (isEditable) {
-                        Text(text = stringResource(R.string.password_length, maxCharacters))
+                    if (uiState.canEditPasswordManually) {
+                        Text(
+                            text = stringResource(
+                                R.string.password_length,
+                                uiState.maxCharacters
+                            )
+                        )
 
                         Slider(
-                            value = maxCharacters.toFloat(),
-                            onValueChange = {
-                                maxCharacters = it.toInt()
-                                password = ""
-                            },
+                            value = uiState.maxCharacters.toFloat(),
+                            onValueChange = viewModel::onMaxCharactersChange,
                             valueRange = defaultMinLength.toFloat()..defaultMaxLength.toFloat(),
-                            //steps = defaultMaxLength - defaultMinLength,
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        if (passwordType != PasswordType.PIN) {
+                        if (uiState.passwordType != PasswordType.PIN) {
                             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
                             Text(stringResource(R.string.include_characters))
-                            Spacer(
-                                modifier =
 
-                                    Modifier.height(dimensionResource(R.dimen.space_small))
-                            )
+                            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_small)))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    CheckboxOption(
-                                        text = stringResource(R.string.uppercase),
-                                        checked = includeUppercase,
-                                        modifier = Modifier.weight(1f),
-                                        onCheckedChange = { includeUppercase = it })
+                                CheckboxOption(
+                                    text = stringResource(R.string.uppercase),
+                                    checked = uiState.includeUppercase,
+                                    modifier = Modifier.weight(1f),
+                                    onCheckedChange = viewModel::onIncludeUppercaseChange
+                                )
 
-                                    CheckboxOption(
-                                        text = stringResource(R.string.lowercase),
-                                        checked = includeLowercase,
-                                        modifier = Modifier.weight(1f),
-                                        onCheckedChange = { includeLowercase = it })
-                                }
+                                CheckboxOption(
+                                    text = stringResource(R.string.lowercase),
+                                    checked = uiState.includeLowercase,
+                                    modifier = Modifier.weight(1f),
+                                    onCheckedChange = viewModel::onIncludeLowercaseChange
+                                )
                             }
 
                             Row(
@@ -368,37 +454,36 @@ fun CreatePasswordScreen(
                                     .padding(top = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    CheckboxOption(
-                                        text = stringResource(R.string.numbers),
-                                        checked = includeNumbers,
-                                        modifier = Modifier.weight(1f),
-                                        onCheckedChange = { includeNumbers = it })
-                                    CheckboxOption(
-                                        text = stringResource(R.string.symbols),
-                                        checked = includeSymbols,
-                                        modifier = Modifier.weight(1f),
-                                        onCheckedChange = { includeSymbols = it })
-                                }
+                                CheckboxOption(
+                                    text = stringResource(R.string.numbers),
+                                    checked = uiState.includeNumbers,
+                                    modifier = Modifier.weight(1f),
+                                    onCheckedChange = viewModel::onIncludeNumbersChange
+                                )
+
+                                CheckboxOption(
+                                    text = stringResource(R.string.symbols),
+                                    checked = uiState.includeSymbols,
+                                    modifier = Modifier.weight(1f),
+                                    onCheckedChange = viewModel::onIncludeSymbolsChange
+                                )
                             }
                         }
+
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.space_large)))
 
-            Button(onClick = {
-                password = generatePassword(
-                    if (isEditable) maxCharacters
-                    else ((defaultMaxLength + defaultMinLength) / 2)
-                )
-            }, modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = {
+                    viewModel.generatePassword(
+                        defaultLength = (defaultMaxLength + defaultMinLength) / 2
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(stringResource(R.string.generate_password))
             }
 
@@ -408,19 +493,16 @@ fun CreatePasswordScreen(
                 text = buildAnnotatedString {
                     append(stringResource(R.string.developed_by))
                     append(" ")
-                    withStyle(
-                        style = SpanStyle(
-                            fontWeight =
-                                FontWeight.ExtraBold
-                        )
+                    withStyle(style = SpanStyle(
+                        fontWeight =
+                            FontWeight.ExtraBold
+                    )
                     ) {
                         append(stringResource(R.string.app_name))
                     }
                 },
-                //Define o tamanho da fonte
-                //fontSize = 12.dp,
-                // Define o estilo da fonte
-                style = MaterialTheme.typography.bodySmall,
+                // Define o tamanho da fonte
+                fontSize = 12.sp,
                 // Define a fonte como normal (poderia ser Italic).
                 fontStyle = FontStyle.Italic,
                 // Alinha o texto
@@ -431,6 +513,7 @@ fun CreatePasswordScreen(
             )
 
         }
+
     }
 }
 
