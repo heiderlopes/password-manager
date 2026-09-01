@@ -53,11 +53,17 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    // Biblioteca de ícones
     implementation (libs.androidx.compose.material.icons.extended)
 
+    // Lottie: animação
     implementation(libs.lottie.compose)
 
+    // SplashScreen: tela de Splash recomendacao Google
+    implementation(libs.androidx.core.splashscreen)
 
-
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlin.serialization.json)
 
 }
