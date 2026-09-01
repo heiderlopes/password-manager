@@ -2,6 +2,7 @@ package br.com.heiderlopes.passwordmanager.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.heiderlopes.passwordmanager.domain.repository.NpsRepository
 import br.com.heiderlopes.passwordmanager.domain.repository.PasswordRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val passwordRepository: PasswordRepository
+    private val passwordRepository: PasswordRepository,
+    private val npsRepository: NpsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -24,6 +26,7 @@ class HomeViewModel(
     private fun loadHome() {
         viewModelScope.launch {
             loadPasswordStats()
+            loadCurrentNps()
         }
     }
 
@@ -56,6 +59,49 @@ class HomeViewModel(
                 _uiState.update {
                     it.copy(
                         passwordStats = stats
+                    )
+                }
+            }
+        }
+    }
+
+    private fun loadCurrentNps() {
+
+        viewModelScope.launch {
+
+            _uiState.update {
+                it.copy(
+                    nps = it.nps.copy(
+                        isLoading = true,
+                        errorMessage = null
+                    )
+                )
+            }
+
+            runCatching {
+
+                npsRepository.getCurrentNps()
+
+            }.onSuccess { nps ->
+
+                _uiState.update {
+                    it.copy(
+                        nps = HomeNpsUiState(
+                            nps = nps,
+                            isLoading = false
+                        )
+                    )
+                }
+
+            }.onFailure { exception ->
+
+                _uiState.update {
+                    it.copy(
+                        nps = HomeNpsUiState(
+                            isLoading = false,
+                            errorMessage =
+                                exception.message
+                        )
                     )
                 }
             }

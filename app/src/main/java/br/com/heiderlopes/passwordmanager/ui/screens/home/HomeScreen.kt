@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.heiderlopes.passwordmanager.R
 import br.com.heiderlopes.passwordmanager.data.local.room.database.AppDatabase
+import br.com.heiderlopes.passwordmanager.data.remote.ApiClient
+import br.com.heiderlopes.passwordmanager.data.repository.NpsRepositoryImpl
 import br.com.heiderlopes.passwordmanager.data.repository.PasswordRepositoryImpl
 import br.com.heiderlopes.passwordmanager.ui.components.AppTopBar
 import br.com.heiderlopes.passwordmanager.ui.screens.home.components.HomeContent
@@ -52,12 +54,18 @@ fun HomeScreen(
 
     val context = LocalContext.current
 
-    val repository = remember {
+    val passwordRepository = remember {
         PasswordRepositoryImpl(AppDatabase.getInstance(context).passwordDao())
     }
 
+    val npsRepository = remember {
+        NpsRepositoryImpl(
+            api = ApiClient.npsApi
+        )
+    }
+
     val factory = remember {
-        HomeViewModelFactory(repository)
+        HomeViewModelFactory(passwordRepository, npsRepository)
     }
 
     val viewModel: HomeViewModel = viewModel(

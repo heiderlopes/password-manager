@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Recommend
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,9 +29,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.heiderlopes.passwordmanager.R
+import br.com.heiderlopes.passwordmanager.data.remote.ApiClient
+import br.com.heiderlopes.passwordmanager.data.repository.NpsRepositoryImpl
 import br.com.heiderlopes.passwordmanager.ui.components.AppTopBar
 import br.com.heiderlopes.passwordmanager.ui.screens.nps.components.NpsCommentField
+import br.com.heiderlopes.passwordmanager.ui.screens.nps.components.NpsForm
 import br.com.heiderlopes.passwordmanager.ui.screens.nps.components.NpsScale
 import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 
@@ -39,111 +47,114 @@ fun NpsScreen(
     onBack: () -> Unit = {},
     onDone: () -> Unit = {}
 ) {
+
+    val npsRepository = remember {
+        NpsRepositoryImpl(
+            api = ApiClient.npsApi
+        )
+    }
+
+    val factory = remember {
+        NpsViewModelFactory(
+            npsRepository
+        )
+    }
+
+    val viewModel: NpsViewModel = viewModel(
+        factory = factory
+    )
+
+    val uiState by viewModel.uiState
+        .collectAsStateWithLifecycle()
+
+    LaunchedEffect(surveyId) {
+        surveyId?.let {
+            viewModel.loadNps(it)
+        }
+    }
+
     Scaffold(
-        topBar = { AppTopBar(stringResource(R.string.app_name), onBackClick = onBack) },
+        topBar = {
+            AppTopBar(
+                stringResource(R.string.app_name),
+                onBackClick = onBack
+            )
+        }
     ) { innerPadding ->
-        Column(
+
+        Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center
         ) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Recommend,
-                    contentDescription = stringResource(R.string.nps_title),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(120.dp)
-                )
-            }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            when {
 
+                uiState.isSuccess -> {
+                    Column(
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
 
-            val selected = remember { mutableIntStateOf(5) }
-            val comment = remember { mutableStateOf("") }
+                        Icon(
+                            imageVector = Icons.Outlined.Recommend,
+                            contentDescription = stringResource(R.string.nps_title),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(120.dp)
+                        )
+                        Spacer(modifier = Modifier
+                            .height(32.dp)
+                            .fillMaxWidth())
+                        Text(
+                            stringResource(R.string.nps_success_thanks),
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier
+                            .height(32.dp)
+                            .fillMaxWidth())
+                        Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.back))
+                        }
+                    }
+                }
 
+                uiState.isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(
+                            Alignment.Center
+                        )
+                    )
+                }
 
-            Text(
-                text = "Qual sua nota?",
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            NpsScale(
-                selected = selected.value,
-                onSelect = { selected.value = it }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            when (val score = selected.value) {
-                null -> {
+                uiState.errorMessage != null -> {
                     Text(
-                        text = stringResource(R.string.nps_select_score),
-                        modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center
+                        text = uiState.errorMessage
+                            ?: stringResource(R.string.nps_error_loading),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center
                     )
                 }
 
-                in 0..6 -> {
-                    Text(stringResource(R.string.nps_feedback_low))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    NpsCommentField(
-                        comment = comment.value,
-                        onCommentChange = { comment.value = it }
+                else -> {
+                    NpsForm(
+                        uiState = uiState,
+                        onScoreSelected = viewModel::onScoreSelected,
+                        onCommentChange = viewModel::onCommentChange,
+                        onSubmit = {
+                            surveyId?.let {
+                                viewModel.submit(it, uiState.comment)
+                            }
+                        }
                     )
                 }
-
-                in 7..8 -> {
-                    Text(stringResource(R.string.nps_feedback_mid))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    NpsCommentField(
-                        comment = comment.value,
-                        onCommentChange = { comment.value = it }
-                    )
-                }
-
-                in 9..10 -> {
-                    Text(stringResource(R.string.nps_feedback_high))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    NpsCommentField(
-                        comment = comment.value,
-                        onCommentChange = { comment.value = it }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    val score = selected.value
-                    onDone()
-
-                }
-            ) {
-                stringResource(R.string.nps_submit)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun NpsScreenPreview() {
-    PasswordManagerTheme {
-        NpsScreen(
-            surveyId = 1L,
-            onBack = {},
-            onDone = {}
-        )
     }
 }
