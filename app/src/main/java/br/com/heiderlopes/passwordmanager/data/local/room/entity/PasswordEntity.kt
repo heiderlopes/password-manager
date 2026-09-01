@@ -1,0 +1,13 @@
+package br.com.heiderlopes.passwordmanager.data.local.room.entity
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "passwords")
+data class PasswordEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0L,
+    val username: String,
+    val password: String,
+    val serviceName: String
+)
