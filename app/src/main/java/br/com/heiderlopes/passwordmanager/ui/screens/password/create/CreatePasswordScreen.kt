@@ -65,6 +65,9 @@ import br.com.heiderlopes.passwordmanager.domain.generator.PasswordGenerator
 import br.com.heiderlopes.passwordmanager.domain.generator.PinPasswordGenerator
 import br.com.heiderlopes.passwordmanager.domain.generator.StandardPasswordGenerator
 import br.com.heiderlopes.passwordmanager.domain.model.PasswordType
+import br.com.heiderlopes.passwordmanager.ui.components.AppTopBar
+import br.com.heiderlopes.passwordmanager.ui.components.CheckboxOption
+import br.com.heiderlopes.passwordmanager.ui.components.LogoApp
 import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,16 +124,7 @@ fun CreatePasswordScreen() {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(stringResource(R.string.app_name))
-                }, colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-
-                )
-            )
+            AppTopBar(title = stringResource(R.string.app_name))
         }
 
     ) { innerPadding ->
@@ -161,24 +155,10 @@ fun CreatePasswordScreen() {
                 Column {
                     // Conteúdo do formulário
 
-                    Image(
-                        // Carrega uma imagem local do diretório res/drawable.
-                        painter = painterResource(id = R.drawable.logo_app),
-                        // Descrição para acessibilidade (ex: leitores de tela).
-                        contentDescription = stringResource(R.string.app_name),
-                        // modifier permite configurar a aparência da imagem:
-                        modifier = Modifier
-                            // Define um tamanho fixo (largura e altura de 150dp).
-                            .size(dimensionResource(R.dimen.logo_size))
-                            // Aplica um fundo colorido no formato de um círculo atrás da imagem. onBackground é uma cor do tema atual (contraste com o fundo).
-                            .background(
-                                MaterialTheme.colorScheme.onBackground,
-                                shape = CircleShape
-                            )
-                            // Centraliza a imagem horizontalmente dentro de um Column ou outro layout que aceite alinhamento de filhos. Só tem efeito se usada dentro de layouts como Column ou Box com alinhamento.
-                            .align(Alignment.CenterHorizontally),
-                        // A imagem será cortada para preencher completamente os 150×150dp, sem distorcer.
-                        contentScale = ContentScale.Crop
+                    LogoApp(
+                        modifier = Modifier.align(
+                            Alignment.CenterHorizontally
+                        )
                     )
 
                     Text(
@@ -359,24 +339,20 @@ fun CreatePasswordScreen() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Checkbox(
+                                    CheckboxOption(
+                                        text = stringResource(R.string.uppercase),
                                         checked = includeUppercase,
-                                        onCheckedChange = { includeUppercase = it }
-                                    )
-                                    Text(stringResource(R.string.uppercase))
-                                }
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Checkbox(
+                                        modifier = Modifier.weight(1f),
+                                        onCheckedChange = { includeUppercase = it })
+
+                                    CheckboxOption(
+                                        text = stringResource(R.string.lowercase),
                                         checked = includeLowercase,
-                                        onCheckedChange = { includeLowercase = it }
-                                    )
-                                    Text(stringResource(R.string.lowercase))
+                                        modifier = Modifier.weight(1f),
+                                        onCheckedChange = { includeLowercase = it })
                                 }
                             }
 
@@ -387,27 +363,21 @@ fun CreatePasswordScreen() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(
-                                    verticalAlignment =
-
-                                        Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Checkbox(
+                                    CheckboxOption(
+                                        text = stringResource(R.string.numbers),
                                         checked = includeNumbers,
-                                        onCheckedChange = { includeNumbers = it }
-                                    )
-                                    Text(stringResource(R.string.numbers))
-                                }
-                                Row(
-                                    verticalAlignment =
-                                        Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Checkbox(
+                                        modifier = Modifier.weight(1f),
+                                        onCheckedChange = { includeNumbers = it })
+                                    CheckboxOption(
+                                        text = stringResource(R.string.symbols),
                                         checked = includeSymbols,
-                                        onCheckedChange = { includeSymbols = it }
-                                    )
-                                    Text(stringResource(R.string.symbols))
+                                        modifier = Modifier.weight(1f),
+                                        onCheckedChange = { includeSymbols = it })
                                 }
                             }
                         }
