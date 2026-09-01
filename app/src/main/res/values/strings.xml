@@ -1,3 +1,90 @@
 <resources>
+    <!-- App -->
     <string name="app_name">Password Manager</string>
+    <string name="create_password_label">CREATE PASSWORD</string>
+    <string name="developed_by">Developed by</string>
+    <string name="create_password_title">Stay protected</string>
+    <string name="create_password_subtitle">Create a unique and secure password.</string>
+
+    <!-- Labels -->
+    <string name="username_label">Username</string>
+    <string name="password_generated_label">Password</string>
+    <string name="allow_edit_password">Allow manual password editing</string>
+    <string name="password_length">Password length: %1$d</string>
+    <string name="password_type">Password Type</string>
+    <string name="include_characters">Include characters:</string>
+    <string name="uppercase">Uppercase</string>
+    <string name="lowercase">Lowercase</string>
+    <string name="numbers">Numbers</string>
+    <string name="symbols">Symbols</string>
+    <string name="password_strength">Password strength:</string>
+    <string name="service_name">Service name</string>
+    <string name="password_hidden_mask">••••••••</string>
+    <string name="lock_icon">Lock icon</string>
+    <string name="nps_title">NPS</string>
+    <string name="password_stats_error">Error loading statistics</string>
+    <string name="home_greeting_title">Hello</string>
+    <string name="home_greeting_message">Keep your accounts protected</string>
+    <string name="home_nav_home">Home</string>
+    <string name="home_nav_passwords">Passwords</string>
+    <string name="home_nav_profile">Profile</string>
+    <string name="add_password">Add password</string>
+    <string name="back">Back</string>
+    <string name="next">Next</string>
+    <string name="finish">Finish</string>
+    <string name="my_passwords">My passwords</string>
+    <string name="no_passwords_yet">No passwords registered yet.</string>
+    <string name="save_password">Save password</string>
+    <string name="delete_password_title">Delete password</string>
+    <string name="delete_password_message">Do you really want to delete this password?</string>
+    <string name="delete_password_action">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="more_options">More options</string>
+    <string name="copy_username">Copy username</string>
+    <string name="copy_password_action">Copy password</string>
+    <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="view_more">View more</string>
+    <string name="new_password">New password</string>
+    <string name="generate_password_action">Generate password</string>
+    <string name="view_passwords">View passwords</string>
+    <string name="import_label">Import</string>
+    <string name="security_tip_title">Security tip</string>
+    <string name="security_tip_description">Use unique passwords for each account and enable two-factor authentication whenever possible.</string>
+    <string name="recent_passwords">Recent passwords</string>
+    <string name="see_all">See all</string>
+    <string name="password_health_title">Health of your passwords</string>
+    <string name="password_health_summary">Summary of your passwords security</string>
+    <string name="saved_passwords">Saved passwords</string>
+    <string name="saved_passwords_good">Great! Keep it up</string>
+    <string name="reused_passwords">Reused passwords</string>
+    <string name="reused_passwords_bad">Change it for better security</string>
+    <string name="nps_comment_placeholder">Tell us why you gave that score</string>
+    <string name="nps_select_score">Choose a score from 0 to 10 to continue.</string>
+    <string name="nps_feedback_low">We’re sorry your experience wasn’t great. What can we improve?</string>
+    <string name="nps_feedback_mid">Thank you! If you’d like, leave an additional comment.</string>
+    <string name="nps_feedback_high">Tell us what you liked most; we’d love to know.</string>
+    <string name="nps_sending">Sending...</string>
+    <string name="nps_submit">Send review</string>
+    <string name="nps_success_thanks">Thank you for your review!</string>
+    <string name="nps_error_loading">Error loading NPS</string>
+    <string name="nps_decrease_score">Decrease score</string>
+    <string name="nps_increase_score">Increase score</string>
+    <string name="nps_not_likely">Not likely</string>
+    <string name="nps_very_likely">Very likely</string>
+    <string name="title_pin">PIN</string>
+    <string name="title_default_password">Standard password</string>
+
+    <!-- Buttons -->
+    <string name="generate_password">Generate Password</string>
+    <string name="copy_password">Copy Password</string>
+    <!-- Toast -->
+    <string name="password_copied">Password copied!</string>
+    <string name="onboarding_title_1">Your passwords in one place</string>
+    <string name="onboarding_subtitle_1">Organize your accounts quickly and easily.</string>
+    <string name="onboarding_title_2">Create secure passwords</string>
+    <string name="onboarding_subtitle_2">Generate passwords using different combinations of characters.</string>
+    <string name="onboarding_title_3">Sync with Premium</string>
+    <string name="onboarding_subtitle_3">Sync your passwords across devices.</string>
 </resources>
