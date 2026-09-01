@@ -12,11 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import br.com.heiderlopes.passwordmanager.ui.screens.home.HomeUiState
+import br.com.heiderlopes.passwordmanager.ui.screens.home.PasswordStatsUiState
 import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,
+    uiState: HomeUiState,
     onNpsClick: (Long?) -> Unit
 ) {
     LazyColumn(
@@ -38,7 +41,9 @@ fun HomeContent(
         }
 
         item {
-            PasswordHealthSection { }
+            PasswordHealthSection(
+                uiState = uiState.passwordStats
+            )
         }
 
         item {
@@ -93,10 +98,20 @@ fun HomeContent(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun HomeContentPreview() {
     PasswordManagerTheme {
-        HomeContent() {}
+        HomeContent(
+            uiState = HomeUiState(
+                passwordStats = PasswordStatsUiState(
+                    totalPasswords = 12,
+                    reusedPasswords = 3,
+                    isLoading = false,
+                    errorMessage = null
+                )
+            ),
+            onNpsClick = {}
+        )
     }
 }

@@ -5,6 +5,7 @@ import br.com.heiderlopes.passwordmanager.data.local.room.mapper.toDomain
 import br.com.heiderlopes.passwordmanager.data.local.room.mapper.toEntity
 import br.com.heiderlopes.passwordmanager.domain.model.Password
 import br.com.heiderlopes.passwordmanager.domain.repository.PasswordRepository
+import kotlinx.coroutines.flow.Flow
 
 class PasswordRepositoryImpl(
     private val passwordDao: PasswordDao
@@ -37,5 +38,13 @@ class PasswordRepositoryImpl(
 
     override suspend fun deleteById(id: Long) {
         passwordDao.deleteById(id)
+    }
+
+    override fun getTotalPasswords(): Flow<Int> {
+        return passwordDao.getTotalPasswords()
+    }
+
+    override fun getTotalReusedPasswords(): Flow<Int> {
+        return passwordDao.getTotalReusedPasswords()
     }
 }
