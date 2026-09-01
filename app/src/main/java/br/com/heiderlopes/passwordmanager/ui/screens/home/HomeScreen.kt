@@ -32,7 +32,11 @@ import br.com.heiderlopes.passwordmanager.ui.components.AppTopBar
 import br.com.heiderlopes.passwordmanager.ui.screens.home.components.HomeContent
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onCreatePassword: () -> Unit,
+    onEditPassword: (Long) -> Unit,
+    onNpsClick: (Long?) -> Unit
+) {
     var selectedItem by rememberSaveable { mutableIntStateOf(0) }
 
     val items = listOf(
@@ -45,7 +49,7 @@ fun HomeScreen() {
         topBar = { AppTopBar(stringResource(R.string.app_name)) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {},
+                onClick = onCreatePassword,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape,
@@ -85,7 +89,9 @@ fun HomeScreen() {
             verticalArrangement = Arrangement.Center
         ) {
             when (selectedItem) {
-                0 -> HomeContent()
+                0 -> HomeContent(
+                    onNpsClick = { surveyId -> onNpsClick(surveyId)}
+                )
                 1 -> Text("Tela Lista de senhas")
                 2 -> Text("Tela de Perfil")
             }

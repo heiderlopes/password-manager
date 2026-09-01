@@ -72,7 +72,10 @@ import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePasswordScreen() {
+fun CreatePasswordScreen(
+    passwordId: Long? = null,
+    onNavigateBack: () -> Unit
+) {
 
     val defaultMinLength = integerResource(R.integer.weak_password_length)
     val defaultMaxLength = integerResource(R.integer.strong_password_length)
@@ -124,7 +127,10 @@ fun CreatePasswordScreen() {
 
     Scaffold(
         topBar = {
-            AppTopBar(title = stringResource(R.string.app_name))
+            AppTopBar(
+                title = stringResource(R.string.app_name),
+                onBackClick = onNavigateBack
+            )
         }
 
     ) { innerPadding ->
@@ -432,6 +438,6 @@ fun CreatePasswordScreen() {
 @Composable
 private fun CreatePasswordScreenPreview() {
     PasswordManagerTheme {
-        CreatePasswordScreen()
+        CreatePasswordScreen(1) {}
     }
 }

@@ -16,7 +16,8 @@ import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 
 @Composable
 fun HomeContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNpsClick: (Long?) -> Unit
 ) {
     LazyColumn(
         modifier = modifier
@@ -50,7 +51,7 @@ fun HomeContent(
         }
 
         item {
-            NpsSection { }
+            NpsSection {surveyId -> onNpsClick(surveyId) }
         }
 
         item {
@@ -96,6 +97,6 @@ fun HomeContent(
 @Composable
 private fun HomeContentPreview() {
     PasswordManagerTheme {
-        HomeContent()
+        HomeContent() {}
     }
 }
