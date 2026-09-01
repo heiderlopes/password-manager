@@ -12,6 +12,7 @@ import br.com.heiderlopes.passwordmanager.ui.screens.home.HomeScreen
 import br.com.heiderlopes.passwordmanager.ui.screens.nps.NpsScreen
 import br.com.heiderlopes.passwordmanager.ui.screens.onboarding.OnboardingScreen
 import br.com.heiderlopes.passwordmanager.ui.screens.password.create.CreatePasswordScreen
+import br.com.heiderlopes.passwordmanager.ui.screens.password.list.ListPasswordsScreen
 import br.com.heiderlopes.passwordmanager.ui.screens.splash.SplashScreen
 
 @Composable
@@ -57,6 +58,17 @@ fun AppNavigation(
                 },
                 onNpsClick = { surveyId ->
                     navController.navigate(Routes.NPS.createRoute(surveyId))
+                }
+            )
+        }
+
+        composable(Routes.ListPassword.route) {
+            ListPasswordsScreen(
+                onPasswordClick = { passwordId ->
+                    navController.navigate(Routes.EditPassword.createRoute(passwordId))
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

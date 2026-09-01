@@ -34,6 +34,7 @@ import br.com.heiderlopes.passwordmanager.data.local.room.database.AppDatabase
 import br.com.heiderlopes.passwordmanager.data.repository.PasswordRepositoryImpl
 import br.com.heiderlopes.passwordmanager.ui.components.AppTopBar
 import br.com.heiderlopes.passwordmanager.ui.screens.home.components.HomeContent
+import br.com.heiderlopes.passwordmanager.ui.screens.password.list.ListPasswordsScreen
 
 @Composable
 fun HomeScreen(
@@ -114,7 +115,11 @@ fun HomeScreen(
                     uiState = uiState,
                     onNpsClick = { surveyId -> onNpsClick(surveyId)}
                 )
-                1 -> Text("Tela Lista de senhas")
+                1 -> ListPasswordsScreen(
+                    onNavigateBack = { },
+                    onPasswordClick = onEditPassword,
+                    showTopBar = false
+                )
                 2 -> Text("Tela de Perfil")
             }
         }
