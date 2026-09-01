@@ -24,12 +24,20 @@ fun AppNavigation(
         = Routes.Splash.route
     ) {
         composable(Routes.Splash.route) {
-            SplashScreen(onNavigate = {
-                navController.navigate(Routes.Onboarding.route) {
-                    popUpTo(Routes.Splash.route) { inclusive = true }
+            SplashScreen(
+                onGoToOnboarding = {
+                    navController.navigate(Routes.Onboarding.route) {
+                        popUpTo(Routes.Splash.route) { inclusive = true }
+                    }
+                },
+                onGoToHome = {
+                    navController.navigate(Routes.Home.route) {
+                        popUpTo(Routes.Splash.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
+
         composable(Routes.Onboarding.route) {
             OnboardingScreen(onFinish = {
                 navController.navigate(Routes.Home.route) {
