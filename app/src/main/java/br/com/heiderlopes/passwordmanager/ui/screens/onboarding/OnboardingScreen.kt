@@ -33,6 +33,7 @@ import br.com.heiderlopes.passwordmanager.ui.screens.onboarding.components.Onboa
 import br.com.heiderlopes.passwordmanager.ui.screens.onboarding.components.OnboardingPage
 import br.com.heiderlopes.passwordmanager.ui.screens.onboarding.model.OnboardingItem
 import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun OnboardingScreen(
@@ -134,7 +135,16 @@ fun OnboardingScreen(
                 onBack = viewModel::previousPage,
                 onNext = viewModel::nextPage,
                 onFinish = {
-                    // Futuramente: // salvar skipIntro no DataStore
+                    scope.launch {
+                        viewModel
+                            .finishOnboarding()
+                            .onSuccess {
+                                onFinish()
+                            }
+                            .onFailure {
+
+                            }
+                    }
                     onFinish()
                 }
             )
