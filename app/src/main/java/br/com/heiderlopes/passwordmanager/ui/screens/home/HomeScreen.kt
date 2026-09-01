@@ -27,7 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.heiderlopes.passwordmanager.R
+import br.com.heiderlopes.passwordmanager.data.local.room.database.AppDatabase
+import br.com.heiderlopes.passwordmanager.data.repository.PasswordRepositoryImpl
 import br.com.heiderlopes.passwordmanager.ui.components.AppTopBar
 import br.com.heiderlopes.passwordmanager.ui.screens.home.components.HomeContent
 
@@ -44,6 +48,23 @@ fun HomeScreen(
         BottomNavItem(title = "Senhas", icon = Icons.Default.Lock),
         BottomNavItem(title = "Perfil", icon = Icons.Default.Person)
     )
+
+    val context = LocalContext.current
+
+    val repository = remember {
+        PasswordRepositoryImpl(AppDatabase.getInstance(context).passwordDao())
+    }
+
+    val factory = remember {
+        HomeViewModelFactory(repository)
+    }
+
+    val viewModel: HomeViewModel = viewModel(
+        factory = factory
+    )
+
+    //val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = { AppTopBar(stringResource(R.string.app_name)) },
@@ -90,6 +111,7 @@ fun HomeScreen(
         ) {
             when (selectedItem) {
                 0 -> HomeContent(
+                    uiState = uiState,
                     onNpsClick = { surveyId -> onNpsClick(surveyId)}
                 )
                 1 -> Text("Tela Lista de senhas")
