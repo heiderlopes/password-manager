@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import br.com.heiderlopes.passwordmanager.ui.screens.home.HomeScreen
+import br.com.heiderlopes.passwordmanager.ui.screens.nps.NpsScreen
 import br.com.heiderlopes.passwordmanager.ui.screens.password.create.CreatePasswordScreen
 import br.com.heiderlopes.passwordmanager.ui.theme.PasswordManagerTheme
 
@@ -22,7 +23,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             PasswordManagerTheme {
                 //CreatePasswordScreen()
-                HomeScreen()
+                //HomeScreen()
+                NpsScreen {  }
             }
         }
     }
